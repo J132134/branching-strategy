@@ -8,7 +8,7 @@ on:
 jobs:
   qa-new-release:
     runs-on: ubuntu-latest
-    # environment: production
+    environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -18,16 +18,13 @@ jobs:
       - name: Calculate new version
         id: calver
         run: |
-          echo "::set-output name=version::$(./scripts/get-new-version.sh)"
-      - run: echo "${{ steps.calver.outputs.version }}"
+          echo "version=$(./scripts/get-new-version.sh)" >> $GITHUB_ENV
       - name: Create branch
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.TOKEN }}
           script: |
-            const version = "${{ steps.calver.outputs.version }}"
-            console.log(version)
-            const branchName = "releases/" + version
+            const branchName = `releases/${process.env.version}`
             const { owner, repo } = context.repo
 
             const ref = `refs/heads/${branchName}`
