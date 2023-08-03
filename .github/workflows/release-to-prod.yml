@@ -16,8 +16,9 @@ jobs:
       - name: get next release version
         id: version
         run: |
-          version=$(./scripts/compare-with-latest.sh ${GITHUB_REF_NAME##releases/}) 
-          echo "::set-output name=next::${version}"
+          next=$(./scripts/compare-with-latest.sh ${GITHUB_REF_NAME##releases/}) 
+          echo "next version: $next"
+          echo "next=$next" >> $GITHUB_ENV
 
       - name: add tag
         if: success()
