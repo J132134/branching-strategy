@@ -18,6 +18,7 @@ jobs:
           ./scripts/test-release-available.sh
 
       - name: Calculate new version
+        if: success()
         id: calver
         run: |
           version=$(./scripts/get-new-version.sh)
