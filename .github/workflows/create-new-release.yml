@@ -30,7 +30,7 @@ jobs:
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
-            const { owner, repo } = context.repo
-            const ref = `refs/heads/releases/${process.env.version}`
-            const sha = context.sha
-            await github.rest.git.createRef({ owner, repo, ref, sha })
+            const { owner, repo } = context.repo;
+            const ref = `refs/heads/releases/${process.env.version}`;
+            const sha = context.sha;
+            await github.rest.git.createRef({ owner, repo, ref, sha });

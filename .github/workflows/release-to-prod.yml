@@ -26,9 +26,8 @@ jobs:
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
-            const version = "${{ steps.version.outputs.next }}";
-            const { owner, repo } = context.repo
-            const ref = `refs/tags/${version}`;
+            const { owner, repo } = context.repo;
+            const ref = `refs/tags/${process.env.next}`;
             const sha = context.sha;
             await github.rest.git.createRef({ owner, repo, ref, sha });
       
