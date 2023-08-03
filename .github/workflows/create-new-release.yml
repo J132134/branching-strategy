@@ -1,0 +1,39 @@
+name: Create new release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  qa-new-release:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Test available
+        run: |
+          ./scripts/test-release-available.sh
+      - name: Calculate new version
+        id: calver
+        run: |
+          echo "::set-output name=version::$(./scripts/get-new-version.sh)"
+      - name: Create branch
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const version = "${{ steps.calver.outputs.version }}"
+            const branchName = "releases/" + version
+            const { owner, repo } = context.repo
+
+            const ref = `refs/heads/${branchName}`
+            const sha = context.sha
+
+            await github.git.createRef({
+              owner,
+              repo,
+              ref,
+              sha
+            })

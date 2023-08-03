@@ -1,0 +1,63 @@
+name: Release to prod
+
+on:
+  push:
+    branches:
+      - 'releases/**'
+
+jobs:
+  tagging:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: get next release version
+        id: version
+        run: |
+          version=$(./scripts/compare-with-latest.sh ${GITHUB_REF_NAME##releases/}) 
+          echo "::set-output name=next::${version}"
+
+      - name: add tag
+        if: success()
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const version = "${{ steps.version.outputs.next }}";
+            const ref = `refs/tags/${version}`;
+            const sha = context.sha;
+      
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref,
+              sha
+            });
+        
+
+  cleanup:
+    needs: tagging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old release branches
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const currentVersion = process.env.GITHUB_REF_NAME.slice("releases/".length).split('.').map(Number);
+            const versionBranchPrefix = "releases/";
+            const branches = await github.rest.repos.listBranches();
+            const releaseBranches = branches.data
+              .filter(branch => branch.name.startsWith(versionBranchPrefix))
+              .map(branch => ({ name: branch.name, version: branch.name.slice(versionBranchPrefix.length).split('.').map(Number)}));
+
+            for (let {name, version: branchVersion} of releaseBranches) {
+              if (branchVersion.some((val, i) => val < currentVersion[i])) {
+                await github.rest.git.deleteRef({
+                  ref: "heads/" + name,
+                });
+                console.log(`Deleted branch ${name}`);
+              }
+            }
