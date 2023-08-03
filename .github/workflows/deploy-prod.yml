@@ -31,11 +31,11 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
 
-      - name: Merge into master
+      - name: Merge into main
         run: |
-          git checkout master
+          git checkout main
           git merge --no-ff "$GITHUB_REF" --strategy-option=theirs
-          git push origin master
+          git push origin main
 
       - name: Merge into other releases
         run: |
