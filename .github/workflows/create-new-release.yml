@@ -15,7 +15,7 @@ jobs:
 
       - name: Test available
         run: |
-          ./scripts/test-release-available.sh
+          ./scripts/test-release-available.sh $GITHUB_SHA
 
       - name: Calculate new version
         if: success()
