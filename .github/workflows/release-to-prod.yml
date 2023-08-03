@@ -46,7 +46,7 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const { owner, repo {} = context.repo;
+            const { owner, repo } = context.repo;
             const currentVersion = process.env.GITHUB_REF_NAME.slice("releases/".length).split('.').map(Number);
             const versionBranchPrefix = "releases/";
 
