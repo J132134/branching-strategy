@@ -28,4 +28,4 @@ if [ -n "$latestBuild" ] && [ "$yearweek" == "$latestYearweek" ]; then
   build=$(($latestBuild + 1))
 fi
 
-echo $version
+echo "$head.$yearweek.$build"
