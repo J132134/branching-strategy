@@ -47,18 +47,16 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git fetch origin
 
-      - run: echo $next
-
-      - name: Merge into main
+      - name: Merge into main and other releases
         run: |
+          git fetch origin --all
+          echo $TAG
+
           git checkout main
           git merge $TAG --no-ff --commit --no-edit
           git push origin main
 
-      - name: Merge into other releases
-        run: |
           for branch in $(git branch -r | grep 'origin/releases/'); do
             git checkout ${branch#origin/}
             git merge $TAG --no-ff --commit --no-edit
