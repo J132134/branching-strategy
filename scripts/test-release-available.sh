@@ -11,3 +11,5 @@ for branch in $(git for-each-ref --format='%(refname:short)' 'refs/heads/release
     exit 1;
   fi
 done
+
+exit 1;
