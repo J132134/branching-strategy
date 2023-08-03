@@ -42,6 +42,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: $TAG
 
       - name: Setup git user
         run: |
@@ -50,15 +52,12 @@ jobs:
 
       - name: Merge into main and other releases
         run: |
-          git fetch origin --all
-          echo $TAG
-
-          git checkout main
+          git switch main
           git merge $TAG --no-ff --commit --no-edit
           git push origin main
 
           for branch in $(git branch -r | grep 'origin/releases/'); do
-            git checkout ${branch#origin/}
+            git switch ${branch#origin/}
             git merge $TAG --no-ff --commit --no-edit
             git push origin ${branch#origin/}
           done
