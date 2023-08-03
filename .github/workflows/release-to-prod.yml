@@ -41,6 +41,8 @@ jobs:
           git config --global user.email 'github-actions@github.com'
           git fetch origin
 
+      - run: echo $next
+
       - name: Merge into main
         run: |
           git checkout main
