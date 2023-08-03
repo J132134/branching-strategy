@@ -8,7 +8,7 @@ on:
 jobs:
   qa-new-release:
     runs-on: ubuntu-latest
-    environment: production
+    # environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -25,6 +25,7 @@ jobs:
           github-token: ${{ secrets.TOKEN }}
           script: |
             const version = "${{ steps.calver.outputs.version }}"
+            console.log(version)
             const branchName = "releases/" + version
             const { owner, repo } = context.repo
 
