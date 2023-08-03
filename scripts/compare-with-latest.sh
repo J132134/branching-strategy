@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# find latest tag from origin
+git fetch --tags
+LATEST=$(git describe --tags `git rev-list --tags --max-count=1`)
+
 function parse {
   local VERSION=$1
   # remove v prefix
@@ -15,7 +19,7 @@ function parse {
 read -ra THIS <<< "$(parse $1)"
 THIS_BUILD=${THIS[0]}
 
-read -ra LATEST <<< "$(parse $2)"
+read -ra LATEST <<< "$(parse $LATEST)"
 LATEST_BUILD=${LATEST[0]}
 LATEST_HOTFIX=${LATEST[1]}
 
