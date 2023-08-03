@@ -44,11 +44,17 @@ jobs:
       - name: Delete old release branches
         uses: actions/github-script@v6
         with:
-          github-token: ${{secrets.TOKEN}}
+          github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
+            const { owner, repo {} = context.repo;
             const currentVersion = process.env.GITHUB_REF_NAME.slice("releases/".length).split('.').map(Number);
             const versionBranchPrefix = "releases/";
-            const branches = await github.rest.repos.listBranches();
+
+            const branches = await github.rest.repos.listBranches({
+              owner,
+              repo,
+            });
+
             const releaseBranches = branches.data
               .filter(branch => branch.name.startsWith(versionBranchPrefix))
               .map(branch => ({ name: branch.name, version: branch.name.slice(versionBranchPrefix.length).split('.').map(Number)}));
@@ -56,6 +62,8 @@ jobs:
             for (let {name, version: branchVersion} of releaseBranches) {
               if (branchVersion.some((val, i) => val < currentVersion[i])) {
                 await github.rest.git.deleteRef({
+                  owner,
+                  repo,
                   ref: "heads/" + name,
                 });
                 console.log(`Deleted branch ${name}`);
