@@ -40,14 +40,14 @@ jobs:
       - name: Merge into main
         run: |
           git checkout main
-          git merge --no-ff "$GITHUB_REF" --strategy-option=theirs
+          git merge --no-ff "$next" --strategy-option=theirs
           git push origin main
 
       - name: Merge into other releases
         run: |
           for branch in $(git branch -r | grep 'origin/releases/'); do
             git checkout ${branch#origin/}
-            git merge --no-ff "$GITHUB_REF" --strategy-option=theirs
+            git merge --no-ff "$next" --strategy-option=theirs
             git push origin ${branch#origin/}
           done
 
