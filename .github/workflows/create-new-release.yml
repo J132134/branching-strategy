@@ -18,14 +18,9 @@ jobs:
       - name: Calculate new version
         id: calver
         run: |
-          # Run the script and capture the output
           version=$(./scripts/get-new-version.sh)
-          
-          # Print the output for debugging
-          echo "Script output: $version"
-          
+          echo "new version: $version"
           echo "version=$version" >> $GITHUB_ENV
-      - run: echo $version
       - name: Create branch
         uses: actions/github-script@v6
         with:

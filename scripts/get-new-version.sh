@@ -15,8 +15,8 @@ if [ ${weekNumber} -ge 52 ] && [ ${dayOfMonth} -le 7 ]; then
   currentYear=$((currentYear - 1))
 fi
 
-# Get the branch names from the remote references, filter for release/ branches and sort
-latest=`git ls-remote --refs origin | awk -F 'refs/heads/' '{print $2}' | grep '^release/' | sort -V | tail -1`
+# Get the branch names from the remote references, filter for releases/ branches and sort
+latest=`git ls-remote --refs origin | awk -F 'refs/heads/' '{print $2}' | grep '^releases/' | sort -V | tail -1`
 
 latestYearweek=`echo $latest | cut -d. -f2`
 latestBuild=`echo $latest | cut -d. -f3`
