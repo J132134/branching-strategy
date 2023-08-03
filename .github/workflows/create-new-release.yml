@@ -31,7 +31,7 @@ jobs:
             const ref = `refs/heads/${branchName}`
             const sha = context.sha
 
-            await github.git.createRef({
+            await github.rest.git.createRef({
               owner,
               repo,
               ref,
