@@ -23,19 +23,33 @@ jobs:
         if: success()
         uses: actions/github-script@v6
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             const version = "${{ steps.version.outputs.next }}";
+            const { owner, repo } = context.repo
             const ref = `refs/tags/${version}`;
             const sha = context.sha;
+            await github.rest.git.createRef({ owner, repo, ref, sha });
       
-            await github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref,
-              sha
-            });
-        
+      - name: Setup git user
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+
+      - name: Merge into main
+        run: |
+          git checkout main
+          git merge --no-ff "$GITHUB_REF" --strategy-option=theirs
+          git push origin main
+
+      - name: Merge into other releases
+        run: |
+          git fetch origin
+          for branch in $(git branch -r | grep 'origin/releases/'); do
+            git checkout ${branch#origin/}
+            git merge --no-ff "$GITHUB_REF" --strategy-option=theirs
+            git push origin ${branch#origin/}
+          done
 
   cleanup:
     needs: tagging
@@ -44,7 +58,7 @@ jobs:
       - name: Delete old release branches
         uses: actions/github-script@v6
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { owner, repo } = context.repo;
             const currentVersion = process.env.GITHUB_REF_NAME.slice("releases/".length).split('.').map(Number);

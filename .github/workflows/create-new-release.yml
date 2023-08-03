@@ -6,34 +6,31 @@ on:
       - main
 
 jobs:
-  qa-new-release:
+  create-new-release:
     runs-on: ubuntu-latest
     environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
       - name: Test available
         run: |
           ./scripts/test-release-available.sh
+
       - name: Calculate new version
         id: calver
         run: |
           version=$(./scripts/get-new-version.sh)
           echo "new version: $version"
           echo "version=$version" >> $GITHUB_ENV
+
       - name: Create branch
         if: success()
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             const { owner, repo } = context.repo
             const ref = `refs/heads/releases/${process.env.version}`
             const sha = context.sha
-
-            await github.rest.git.createRef({
-              owner,
-              repo,
-              ref,
-              sha
-            })
+            await github.rest.git.createRef({ owner, repo, ref, sha })
