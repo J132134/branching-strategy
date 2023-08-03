@@ -50,12 +50,16 @@ jobs:
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
 
-      - name: Merge into main and other releases
+      - name: Merge into main
         run: |
+          git fetch origin '+refs/heads/main:refs/remotes/origin/main'
           git switch main
           git merge $TAG --no-ff --commit --no-edit
           git push origin main
-
+      
+      - name: Merge into other releases
+        run: |
+          git fetch origin '+refs/heads/releases/*:refs/remotes/origin/releases/*'
           for branch in $(git branch -r | grep 'origin/releases/'); do
             git switch ${branch#origin/}
             git merge $TAG --no-ff --commit --no-edit
