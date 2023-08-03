@@ -23,7 +23,7 @@ jobs:
         if: success()
         uses: actions/github-script@v6
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{secrets.TOKEN}}
           script: |
             const version = "${{ steps.version.outputs.next }}";
             const ref = `refs/tags/${version}`;
@@ -44,7 +44,7 @@ jobs:
       - name: Delete old release branches
         uses: actions/github-script@v6
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{secrets.TOKEN}}
           script: |
             const currentVersion = process.env.GITHUB_REF_NAME.slice("releases/".length).split('.').map(Number);
             const versionBranchPrefix = "releases/";

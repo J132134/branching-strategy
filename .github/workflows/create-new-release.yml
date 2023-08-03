@@ -22,7 +22,7 @@ jobs:
       - name: Create branch
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.TOKEN }}
           script: |
             const version = "${{ steps.calver.outputs.version }}"
             const branchName = "releases/" + version
