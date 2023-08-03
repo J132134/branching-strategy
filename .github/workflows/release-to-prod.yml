@@ -42,25 +42,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ env.TAG }}
+          fetch-depth: 0
 
       - name: Setup git user
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git fetch origin
-
-      - run: echo $next
 
       - name: Merge into main
         run: |
-          git checkout main
+          git switch main
           git merge $TAG --no-ff --commit --no-edit
           git push origin main
-
+      
       - name: Merge into other releases
         run: |
           for branch in $(git branch -r | grep 'origin/releases/'); do
-            git checkout ${branch#origin/}
+            git switch ${branch#origin/}
             git merge $TAG --no-ff --commit --no-edit
             git push origin ${branch#origin/}
           done
