@@ -22,6 +22,7 @@ jobs:
           echo "new version: $version"
           echo "version=$version" >> $GITHUB_ENV
       - name: Create branch
+        if: success()
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.TOKEN }}
