@@ -20,11 +20,11 @@ jobs:
             exit 1
           fi
 
-      - name: Vercel deploy
-        run: |
-          npm i -g vercel
-          echo "VERCEL_TOKEN=${{ secrets.VERCEL_TOKEN }}" > .env
-          vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
+      # - name: Vercel deploy
+      #   run: |
+      #     npm i -g vercel
+      #     echo "VERCEL_TOKEN=${{ secrets.VERCEL_TOKEN }}" > .env
+      #     vercel --prod --token ${{ secrets.VERCEL_TOKEN }}
 
       - name: Setup Git User
         run: |
