@@ -19,6 +19,7 @@ jobs:
         id: calver
         run: |
           echo "::set-output name=version::$(./scripts/get-new-version.sh)"
+      - run: echo "${{ steps.calver.outputs.version }}"
       - name: Create branch
         uses: actions/github-script@v6
         with:
