@@ -19,6 +19,7 @@ jobs:
         id: calver
         run: |
           echo "version=$(./scripts/get-new-version.sh)" >> $GITHUB_ENV
+      - run: echo $version
       - name: Create branch
         uses: actions/github-script@v6
         with:
