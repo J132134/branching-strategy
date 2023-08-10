@@ -55,4 +55,5 @@ jobs:
             const { owner, repo } = context.repo;
             const head = `releases/${process.env.version}`;
             const base = 'main';
-            await github.rest.pulls.create({ owner, repo, head, base });
+            const title = `Release ${process.env.version}`
+            await github.rest.pulls.create({ owner, repo, head, base, title });
