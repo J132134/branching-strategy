@@ -37,10 +37,10 @@ jobs:
       - name: Checkout to new branch
         uses: actions/checkout@v3
         with:
-          ref: releases/$version
+          ref: releases/${{ env.version }}
 
       - name: Update package.json version
-        run: npm pkg set version=$version
+        run: npm pkg set version=${{ env.version }}
           
       - name: Commit and push changes
         uses: actions/github-script@v6
