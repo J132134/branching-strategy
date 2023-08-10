@@ -39,6 +39,6 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
-            const head = '${github.actor}:releases/${process.env.version}';
+            const head = `${github.actor}:releases/${process.env.version}`;
             const base = 'main';
             await github.rest.pulls.create({ owner, repo, head, base });
