@@ -22,20 +22,16 @@ jobs:
       - name: Set next release version
         id: version
         run: |
-          next=${GITHUB_HEAD_REF##releases/}
-          echo "next version: $next"
-          echo "next=$next" >> $GITHUB_ENV
-          echo "next=$next" >> $GITHUB_OUTPUT
+          version=${GITHUB_HEAD_REF##releases/}
+          echo "release version: $version"
+          echo "version=$version" >> $GITHUB_ENV
 
-      - name: add tag
-        if: success()
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const ref = `refs/tags/${process.env.next}`;
-            const sha = github.event.pull_request.head.sha;
-            await github.rest.git.createRef({ owner, repo, ref, sha });
+      - name: Push tag
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git tag ${{ env.version }}
+          git push origin ${{ env.version }}
 
   cleanup:
     needs: tagging
@@ -47,7 +43,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const { owner, repo } = context.repo;
-            const currentVersion = process.env.GITHUB_REF_NAME.slice("releases/".length).split('.').map(Number);
+            const currentVersion = process.env.GITHUB_HEAD_REF.slice("releases/".length).split('.').map(Number);
             const versionBranchPrefix = "releases/";
 
             const branches = await github.rest.repos.listBranches({
