@@ -1,0 +1,52 @@
+name: Hotfix backporting
+
+on:
+  pull_request:
+    types:
+      - closed
+      - labeled
+
+jobs:
+  backport:
+    if: |
+      github.base_ref == 'main' &&
+      github.event.pull_request.merged == true &&
+      ((
+        github.event.action == 'closed' &&
+        contains(github.event.pull_request.labels.*.name, 'backport')
+      ) || (
+        github.event.action == 'labeled' &&
+        github.event.label.name == 'backport'
+      ))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup git user
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+
+      - name: Backport into latest tag
+        run: |
+          git fetch --tags
+          LATEST=$(git describe --tags `git rev-list --tags --max-count=1`)
+          git checkout $LATEST
+          NEW_BRANCH=backport/${LATEST}
+          git switch -c $NEW_BRANCH
+          git cherry-pick $(git merge-base main ${{ github.event.pull_request.head.sha }})..${{ github.event.pull_request.head.sha }} --squash
+          git commit -m "Backport: #${{ github.event.number }}"
+          NEW_VERSION=$(./scripts/incease-hotfix-version.sh $LATEST)
+          git tag $NEW_VERSION
+          git push origin $NEW_VERSION
+
+      - name: Backport into next releases
+        run: |
+          git fetch -n origin '+refs/heads/releases/*:refs/remotes/origin/releases/*'
+          for branch in $(git for-each-ref --format='%(refname:short)' 'refs/remotes/origin/releases/*'); do
+            git switch $branch
+            git cherry-pick $(git merge-base main ${{ github.event.pull_request.head.sha }})..${{ github.event.pull_request.head.sha }} --squash
+            git commit -m "Backport: #${{ github.event.number }}"
+            git push origin $branch
+          done
