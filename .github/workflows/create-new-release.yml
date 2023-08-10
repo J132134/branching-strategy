@@ -38,37 +38,15 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: releases/${{ env.version }}
-
-      - name: Update package.json version
-        run: npm pkg set version=${{ env.version }}
           
       - name: Commit and push changes
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const path = 'package.json';
-            
-            const fs = require('fs');
-            const updatedContent = fs.readFileSync(path, 'utf8');
-            const encodedContent = Buffer.from(updatedContent).toString('base64');
-            
-            const fileContentResponse = await github.rest.repos.getContent({
-              owner,
-              repo,
-              path
-            });
-            
-            const currentSHA = fileContentResponse.data.sha;
-            
-            await github.rest.repos.createOrUpdateFileContents({
-              owner,
-              repo,
-              path,
-              message: `Update version to ${process.env.version}`,
-              content: encodedContent,
-              sha: currentSHA
-            });
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          npm pkg set version=${{ env.version }}
+          git add package.json
+          git commit -m "Update version to ${{ env.version }}"
+          git push origin releases/${{ env.version }}
 
       - name: Create pull request
         uses: actions/github-script@v6
