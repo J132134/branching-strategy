@@ -5,6 +5,8 @@ on:
     types:
       - closed
       - labeled
+    branches-ignore:
+      - 'releases/**'
 
 jobs:
   backport:
