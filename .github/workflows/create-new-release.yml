@@ -26,12 +26,19 @@ jobs:
           echo "version=$version" >> $GITHUB_ENV
 
       - name: Create branch
-        if: success()
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             const { owner, repo } = context.repo;
             const ref = `refs/heads/releases/${process.env.version}`;
             const sha = context.sha;
             await github.rest.git.createRef({ owner, repo, ref, sha });
+
+      - name: Create pull request
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const head = 'releases/${process.env.version}';
+            const base = 'main';
+            await github.rest.pulls.create({ owner, repo, head, base });
