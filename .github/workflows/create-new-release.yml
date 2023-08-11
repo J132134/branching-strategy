@@ -35,7 +35,10 @@ jobs:
       
             if (problematicBranches.length > 0) {
               throw new Error("Newer releases branch detected!");
-            }  
+            }
+
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Calculate new version
         if: success()
