@@ -33,7 +33,7 @@ jobs:
 
       - name: Backport into latest tag
         run: |
-          git fetch --tags
+          git fetch -t origin main
           LATEST=$(git describe --tags `git rev-list --tags --max-count=1`)
           git switch -c backport/${LATEST} $LATEST
           git cherry-pick $(git merge-base main ${{ github.event.pull_request.head.sha }})..${{ github.event.pull_request.head.sha }} --squash
