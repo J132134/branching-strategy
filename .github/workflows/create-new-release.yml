@@ -15,7 +15,22 @@ jobs:
 
       - name: Test available
         run: |
-          ./scripts/test-release-available.sh $GITHUB_SHA
+          git fetch -n origin '+refs/heads/releases/*:refs/remotes/origin/releases/*'
+
+          for branch in $(git for-each-ref --format='%(refname:short)' 'refs/remotes/releases/*'); do
+            echo $branch
+            base_commit=$(git merge-base main $branch)
+            base_commit_time=$(git log -1 --format="%at" $base_commit)
+            current_commit_time=$(git log -1 --format="%at" $GITHUB_SHA)
+            echo $base_commit
+            echo $GITHUB_SHA
+
+            if [ $base_commit_time -ge $current_commit_time ]; then
+              echo 'exit 1'
+              exit 1
+            fi
+          done
+
 
       - name: Calculate new version
         if: success()
