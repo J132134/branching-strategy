@@ -15,12 +15,12 @@ jobs:
         with:
           script: |
             const repo = context.repo;
-            const branches = await github.repos.listBranches(repo);
+            const branches = await github.rest.repos.listBranches(repo);
             
             const hasNewerReleaseBranch = await branches.data
               .filter(branch => branch.name.startsWith('releases/'))
               .some(async (branch) => {
-                const comparison = await github.repos.compareCommits({
+                const comparison = await github.rest.repos.compareCommits({
                   ...repo,
                   base: branch.name,
                   head: process.env.GITHUB_SHA
