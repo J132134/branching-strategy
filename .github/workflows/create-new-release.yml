@@ -17,31 +17,25 @@ jobs:
             const repo = context.repo;
             const branches = await github.rest.repos.listBranches(repo);
             
-            const problematicBranches = [];
+            branches.data
+              .filter(branch => branch.name.startsWith('releases/'))
+              .some(async (branch) => {
+                const comparison = await github.rest.repos.compareCommits({
+                  ...repo,
+                  base: branch.name,
+                  head: process.env.GITHUB_SHA
+                });
       
-            for (const branch of branches.data.filter(branch => branch.name.startsWith('releases/'))) {
-              const comparison = await github.rest.repos.compareCommits({
-                ...repo,
-                base: branch.name,
-                head: process.env.GITHUB_SHA
+                if (["identical", "behind"].includes(comparison.data.status)) {
+                  console.log(`Problem with branch: ${branch.name}`);
+                  throw new Error("Newer releases branch detected!");
+                }
               });
-      
-              if (["identical", "behind"].includes(comparison.data.status)) {
-                console.log(`Problem with branch: ${branch.name}`);
-                console.log(`Comparison status: ${comparison.data.status}`);
-                problematicBranches.push(branch.name);
-              }
-            }
-      
-            if (problematicBranches.length > 0) {
-              throw new Error("Newer releases branch detected!");
-            }
 
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Calculate new version
-        if: success()
         id: calver
         run: |
           version=$(./scripts/get-new-version.sh)
