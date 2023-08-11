@@ -15,30 +15,35 @@ jobs:
 
       - name: Test available
         run: |
-          # shallow fetch releases/* branches
-          git fetch -n --depth=1 origin '+refs/heads/releases/*:refs/remotes/origin/releases/*'
+          # Perform a shallow fetch for the main branch and releases/* branches.
+          git fetch --depth=1 origin main '+refs/heads/releases/*:refs/remotes/origin/releases/*'
 
-          while true; do
-              # try `git merge-base`
-              for branch in $(git for-each-ref --format='%(refname:short)' 'refs/remotes/origin/releases/*'); do
-                  BASE_COMMIT=$(git merge-base main $branch) || continue 2
-              done
+          # Function to check if merge-base succeeds for all branches.
+          check_merge_base() {
+            for branch in $(git for-each-ref --format='%(refname:short)' 'refs/remotes/origin/releases/*'); do
+              branch=${branch#origin/}
+              if ! git merge-base main $branch > /dev/null 2>&1; then
+                return 1
+              fi
+            done
+            return 0
+          }
 
-              # if success all branches
-              break
-
-              # failed on git merge-base, fetch more history
-              git fetch --deepen=50 origin main '+refs/heads/releases/*:refs/remotes/origin/releases/*'
+          # Deepen the history until merge-base succeeds for all branches.
+          while ! check_merge_base; do
+            git fetch --deepen=50 origin main '+refs/heads/releases/*:refs/remotes/origin/releases/*'
           done
 
+          # Test release available
           for branch in $(git for-each-ref --format='%(refname:short)' 'refs/remotes/origin/releases/*'); do
-              base_commit=$(git merge-base main $branch)
-              base_commit_time=$(git log -1 --format="%at" $base_commit)
-              current_commit_time=$(git log -1 --format="%at" $GITHUB_SHA)
+            base_commit=$(git merge-base main $branch)
+            base_commit_time=$(git log -1 --format="%at" $base_commit)
+            current_commit_time=$(git log -1 --format="%at" $GITHUB_SHA)
 
-              if [ $base_commit_time -ge $current_commit_time ]; then
-                  exit 1
-              fi
+            if [ $base_commit_time -ge $current_commit_time ]; then
+              echo 'Exiting due to base commit time being greater or equal to current commit time.'
+              exit 1
+            fi
           done
 
       - name: Calculate new version
