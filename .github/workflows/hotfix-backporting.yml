@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Setup git user
         run: |
@@ -32,9 +34,7 @@ jobs:
         run: |
           git fetch --tags
           LATEST=$(git describe --tags `git rev-list --tags --max-count=1`)
-          git checkout $LATEST
-          NEW_BRANCH=backport/${LATEST}
-          git switch -c $NEW_BRANCH
+          git switch -c backport/${LATEST} $LATEST
           git cherry-pick $(git merge-base main ${{ github.event.pull_request.head.sha }})..${{ github.event.pull_request.head.sha }} --squash
           git commit -m "Backport: #${{ github.event.number }}"
           NEW_VERSION=$(./scripts/incease-hotfix-version.sh $LATEST)
