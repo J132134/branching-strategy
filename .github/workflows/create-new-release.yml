@@ -6,9 +6,11 @@ on:
       - main
 
 jobs:
-  create-new-release:
+  new-release-for-qa:
     runs-on: ubuntu-latest
     environment: qa
+    outputs:
+      version: ${{ steps.calver.outputs.version }}
     steps:
       - name: Test available
         uses: actions/github-script@v6
@@ -41,36 +43,81 @@ jobs:
           version=$(./scripts/get-new-version.sh)
           echo "new version: $version"
           echo "version=$version" >> $GITHUB_ENV
+          echo "version=$version" >> $GITHUB_OUTPUT
 
-      - name: Create branch
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const ref = `refs/heads/releases/${process.env.version}`;
-            const sha = context.sha;
-            await github.rest.git.createRef({ owner, repo, ref, sha });
-      
-      - name: Checkout to new branch
-        uses: actions/checkout@v3
-        with:
-          ref: releases/${{ env.version }}
-          
-      - name: Commit and push changes
+      - name: Create and push release branch
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          npm pkg set version=${{ env.version }}
-          git add package.json
-          git commit -m "Update version to ${{ env.version }}"
+          git switch -c releases/${{ env.version }}
           git push origin releases/${{ env.version }}
+  
+  release-to-prod:
+    runs-on: ubuntu-latest
+    needs: new-release-for-qa
+    env:
+      version: ${{ needs.new-release-for-qa.outputs.version }}
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: releases/${{ env.version }}
 
-      - name: Create pull request
+      - name: Push tag
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git tag ${{ env.version }}
+          git push origin ${{ env.version }}
+
+  merging:
+    runs-on: ubuntu-latest
+    needs: [new-release-for-qa, release-to-prod]
+    env:
+      tag: ${{ needs.new-release-for-qa.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Merge into main
+        run: |
+          git fetch origin tag ${{ env.tag }} --no-tags
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git merge ${{ env.tag }} --no-ff --commit --no-edit
+          git push origin main
+
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: merging
+    steps:
+      - name: Delete old release branches
         uses: actions/github-script@v6
         with:
           script: |
             const { owner, repo } = context.repo;
-            const head = `releases/${process.env.version}`;
-            const base = 'main';
-            const title = `Release ${process.env.version}`
-            await github.rest.pulls.create({ owner, repo, head, base, title });
+            const currentVersion = process.env.GITHUB_HEAD_REF.slice("releases/".length).split('.').map(Number);
+            const versionBranchPrefix = "releases/";
+
+            const branches = await github.rest.repos.listBranches({
+              owner,
+              repo,
+            });
+
+            const releaseBranches = branches.data
+              .filter(branch => branch.name.startsWith(versionBranchPrefix))
+              .map(branch => ({ name: branch.name, version: branch.name.slice(versionBranchPrefix.length).split('.').map(Number)}));
+
+            for (let {name, version: branchVersion} of releaseBranches) {
+              if (branchVersion.some((val, i) => val < currentVersion[i])) {
+                await github.rest.git.deleteRef({
+                  owner,
+                  repo,
+                  ref: "heads/" + name,
+                });
+                console.log(`Deleted branch ${name}`);
+              }
+            }
