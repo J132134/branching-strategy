@@ -99,25 +99,24 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
-            const currentVersion = process.env.GITHUB_HEAD_REF.slice("releases/".length).split('.').map(Number);
-            const versionBranchPrefix = "releases/";
+            const prefix = "releases/";
 
-            const branches = await github.rest.repos.listBranches({
-              owner,
-              repo,
-            });
-
-            const releaseBranches = branches.data
-              .filter(branch => branch.name.startsWith(versionBranchPrefix))
-              .map(branch => ({ name: branch.name, version: branch.name.slice(versionBranchPrefix.length).split('.').map(Number)}));
-
-            for (let {name, version: branchVersion} of releaseBranches) {
-              if (branchVersion.some((val, i) => val < currentVersion[i])) {
-                await github.rest.git.deleteRef({
-                  owner,
-                  repo,
-                  ref: "heads/" + name,
-                });
-                console.log(`Deleted branch ${name}`);
-              }
+            function getVersionNumbers(branchName) {
+              return branchName.slice(prefix.length).split('.').map(Number);
             }
+
+            const currentVersion = getVersionNumbers(process.env.GITHUB_HEAD_REF);
+            const branches = await github.rest.repos.listBranches({ owner, repo });
+
+            await Promise.all(
+              branches.data
+                .filter(({ name }) => {
+                  const version = getVersionNumbers(name);
+                  return name.startsWith(prefix) && version.every((val, i) => val <= currentVersion[i]);
+                })
+                .map(async ({ name }) => {
+                  await github.rest.git.deleteRef({ owner, repo, ref: "heads/" + name });
+                  console.log(`Deleted branch ${name}`);
+                })
+            );
+          
