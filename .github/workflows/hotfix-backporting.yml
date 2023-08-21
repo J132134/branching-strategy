@@ -5,11 +5,12 @@ on:
     types:
       - closed
       - labeled
+    branches:
+      - main
 
 jobs:
   backport:
     if: |
-      github.base_ref == 'main' &&
       github.event.pull_request.merged == true &&
       ((
         github.event.action == 'closed' &&
@@ -33,7 +34,7 @@ jobs:
 
       - name: Backport into latest tag
         run: |
-          git fetch -t origin main
+          git fetch origin main
           LATEST=$(git describe --tags `git rev-list --tags --max-count=1`)
           git switch -c backport/${LATEST} $LATEST
           git cherry-pick $(git merge-base main ${{ github.event.pull_request.head.sha }})..${{ github.event.pull_request.head.sha }} --squash
